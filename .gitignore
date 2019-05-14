@@ -1,1 +1,5 @@
 Pipfile.lock
+.pytest_cache/v/cache/nodeids
+.pytest_cache/v/cache/stepwise
+__pycache__/*
+.vscode/*
