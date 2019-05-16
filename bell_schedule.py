@@ -4,7 +4,7 @@ import csv
 import arrow
 
 Period = namedtuple('Period', ['name','start_time','end_time'])
-datetime_format = 'YYYY-M-D H:mm'
+datetime_format = 'YYYY-MM-DD H:mm'
 
 class BellSchedule():
     
@@ -31,12 +31,14 @@ class BellSchedule():
         return [period._asdict() for period in self.periods.values()]
 
     @classmethod
-    def from_csv(cls, filename: str, tz: dt.tzinfo=None):
-        bell_schedule = BellSchedule()
+    def from_csv(cls, filename: str, schedule_date: dt.date, tz: dt.tzinfo=None):
+        bell_schedule = BellSchedule(tz=tz)
         with open(filename) as infile:
             bellreader = csv.DictReader(infile)
             for row in bellreader:
-                bell_schedule.add_period(row['name'], arrow.get(row['start_time'], datetime_format), arrow.get(row['end_time'], datetime_format))
+                start_time = arrow.get(f"{schedule_date.strftime('%Y-%m-%d')} {row['start_time']}", datetime_format)
+                end_time = arrow.get(f"{schedule_date.strftime('%Y-%m-%d')} {row['end_time']}", datetime_format)
+                bell_schedule.add_period(row['name'], start_time, end_time)
 
         return bell_schedule
 
@@ -51,6 +53,6 @@ class BellSchedule():
     def current_period(self, current_time=dt.datetime.now()):
         current_time = arrow.Arrow.fromdatetime(current_time, tzinfo=self.tz)
         for period in self.periods.values():
-            if period.start_time < current_time and current_time < period.end_time:
+            if period.start_time <= current_time and current_time < period.end_time:
                 return period
         return None
