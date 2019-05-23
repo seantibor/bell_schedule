@@ -27,7 +27,7 @@ class BellSchedule():
     def get_period(self, period_name: str) -> Period:
         return self.periods[period_name]
 
-    def as_list_of_dicts(self) -> list:
+    def as_list(self) -> list:
         return [period._asdict() for period in self.periods.values()]
 
     @classmethod
@@ -47,7 +47,7 @@ class BellSchedule():
             fieldnames = ['name', 'start_time', 'end_time']
             bellwriter = csv.DictWriter(outfile, fieldnames=fieldnames)
             bellwriter.writeheader()
-            for row in self.as_list_of_dicts():
+            for row in self.as_list():
                 bellwriter.writerow(row)
 
     def current_period(self, current_time=dt.datetime.now()):
