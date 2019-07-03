@@ -1,6 +1,7 @@
 from bell_schedule import Period, BellSchedule
 import datetime as dt
 import pytest, arrow
+import os
 from freezegun import freeze_time
 
 timezone = "US/Eastern"
@@ -33,13 +34,19 @@ def test_add_period_by_attributes(pc_bellschedule):
 @freeze_time(test_date)
 def test_add_period_by_namedtuple(pc_bellschedule):
     start_count = len(pc_bellschedule.periods)
-    pc_bellschedule.add_period(period=Period("Y", arrow.now(), arrow.now()))
+    test_period = Period("Y", arrow.now(), arrow.now())
+    pc_bellschedule.add_period(period=test_period)
     assert len(pc_bellschedule.periods) == start_count + 1
+    assert pc_bellschedule.get_period('Y') == test_period
 
 
 def test_schedule_to_csv(pc_bellschedule):
     csv_file = "test_output.csv"
     pc_bellschedule.to_csv(csv_file)
+
+def test_schedule_to_json(pc_bellschedule):
+    print(pc_bellschedule.to_json())
+    assert '2019-05-15T08:21:00-04:00' in pc_bellschedule.to_json()
 
 
 @freeze_time(test_date)

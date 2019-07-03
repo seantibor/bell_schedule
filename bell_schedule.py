@@ -1,16 +1,20 @@
 from collections import namedtuple, OrderedDict
 import datetime as dt
 import csv
+import os
 import arrow
+import json
 
 Period = namedtuple('Period', ['name','start_time','end_time'])
 datetime_format = 'YYYY-MM-DD H:mm'
 
 class BellSchedule():
     
-    def __init__(self, tz: dt.tzinfo=None):
+    def __init__(self, name: str, tz: dt.tzinfo=None, schedule_date: dt.date=dt.date.today()):
         self.periods = OrderedDict()
         self.tz = tz
+        self.schedule_date = schedule_date
+        self.name = name
 
     def add_period(self, period_name: str=None, start_time: dt.datetime=None, end_time: dt.datetime=None, period: Period=None) -> None:
         if period:
@@ -27,12 +31,18 @@ class BellSchedule():
     def get_period(self, period_name: str) -> Period:
         return self.periods[period_name]
 
-    def as_list(self) -> list:
-        return [period._asdict() for period in self.periods.values()]
+    def as_list(self, serializable=False) -> list:
+        if serializable:
+            return [{'name': period.name, 'start_time': str(period.start_time), 'end_time': str(period.end_time)} for period in self.periods.values()]
+        else:
+            return [period._asdict() for period in self.periods.values()]
 
     @classmethod
     def from_csv(cls, filename: str, schedule_date: dt.date, tz: dt.tzinfo=None):
-        bell_schedule = BellSchedule(tz=tz)
+        base = os.path.basename(filename)
+        name = os.path.splitext(base)[0]
+        bell_schedule = BellSchedule(name=name, tz=tz)
+        bell_schedule.schedule_date = schedule_date
         with open(filename) as infile:
             bellreader = csv.DictReader(infile)
             for row in bellreader:
@@ -56,3 +66,13 @@ class BellSchedule():
             if period.start_time <= current_time and current_time < period.end_time:
                 return period
         return None
+
+    def as_dict(self):
+        schedule_dict = {'name': self.name,
+                         schedule_date': str(self.schedule_date),
+                         'tz': self.tz,
+                         'periods': self.as_list(serializable=True)}
+        return schedule_dict
+
+    def to_json(self):
+        return json.dumps(self.as_dict(), indent=2)
