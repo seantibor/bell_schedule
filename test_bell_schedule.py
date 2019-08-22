@@ -45,9 +45,11 @@ def test_schedule_to_csv(pc_bellschedule):
     pc_bellschedule.to_csv(csv_file)
 
 def test_schedule_to_json(pc_bellschedule):
-    print(pc_bellschedule.to_json())
-    assert '2019-05-15T08:21:00-04:00' in pc_bellschedule.to_json()
-
+    output_json = pc_bellschedule.to_json()
+    print(output_json)
+    assert '2019-05-15T08:21:00-04:00' in output_json
+    with open('test_output.json', 'w') as outfile:
+        outfile.write(output_json)
 
 @freeze_time(test_date)
 def test_csv_to_schedule(pc_bellschedule):
@@ -57,6 +59,13 @@ def test_csv_to_schedule(pc_bellschedule):
     )
     assert isinstance(pc_bellschedule, BellSchedule)
     assert len(pc_bellschedule.periods) == 13
+
+@freeze_time(test_date)
+def test_json_to_schedule(pc_bellschedule):
+    json_file = "test_input.json"
+    pc_bellschedule = BellSchedule.read_json(json_file)
+    assert isinstance(pc_bellschedule, BellSchedule)
+    assert len(pc_bellschedule.periods) == 12
 
 @freeze_time(test_date)
 def test_current_period(pc_bellschedule):

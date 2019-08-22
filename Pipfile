@@ -13,6 +13,7 @@ arrow = "*"
 freezegun = "*"
 pydrive = "*"
 pytest-cov = "*"
+requests = "*"
 
 [requires]
 python_version = "3.7"
