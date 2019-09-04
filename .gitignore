@@ -3,3 +3,4 @@ Pipfile.lock
 .pytest_cache/v/cache/stepwise
 __pycache__/*
 .vscode/*
+client_secret.json
