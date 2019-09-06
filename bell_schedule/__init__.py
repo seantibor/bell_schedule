@@ -23,14 +23,14 @@ class BellSchedule:
     schedule_date: the date of the schedule. defaults to today.
     """
     def __init__(
-        self, name: str, timezone: Union[dt.tzinfo, str] = tz.UTC, schedule_date: dt.datetime = dt.datetime.utcnow()
+        self, name: str, timezone: Union[dt.tzinfo, str] = tz.tzutc, schedule_date: dt.datetime = dt.datetime.utcnow()
     ):
         if isinstance(timezone, str):
             self.tz = tz.gettz(timezone)
         else:
             self.tz = timezone
         self.periods = OrderedDict()
-        self.schedule_date = schedule_date.astimezone(tz.UTC)
+        self.schedule_date = schedule_date.astimezone(tz.tzutc)
         self.tzname = dt.datetime.tzname(schedule_date.astimezone(self.tz))
         self.name = name
         self.ts = dt.datetime.now().timestamp()
@@ -45,8 +45,8 @@ class BellSchedule:
         if period is None:
             period = Period(
                 period_name,
-                start_time.astimezone(tz.UTC),
-                end_time.astimezone(tz.UTC),
+                start_time.astimezone(tz.tzutc),
+                end_time.astimezone(tz.tzutc),
                 (end_time - start_time).seconds / 60
             )
             
@@ -77,11 +77,11 @@ class BellSchedule:
             return [period._asdict() for period in self.periods.values()]
 
     @classmethod
-    def from_csv(cls, filename: Union[str, pathlib.Path], schedule_date: dt.datetime, timezone: dt.tzinfo = tz.UTC):
+    def from_csv(cls, filename: Union[str, pathlib.Path], schedule_date: dt.datetime, timezone: dt.tzinfo = tz.tzutc):
         if isinstance(filename, str):
             filename = pathlib.Path(filename)
         name = filename.stem
-        schedule_date = schedule_date.astimezone(tz.UTC)
+        schedule_date = schedule_date.astimezone(tz.tzutc)
         bell_schedule = BellSchedule(name=name, schedule_date=schedule_date, timezone=timezone)
         with filename.open() as infile:
             bellreader = csv.DictReader(infile)
@@ -94,8 +94,8 @@ class BellSchedule:
                     time_format
                 ).time()
                 schedule_date_local = schedule_date.astimezone(timezone).date()
-                start_time = dt.datetime.combine(schedule_date_local, start_time).astimezone(tz.UTC).replace(tzinfo=timezone)
-                end_time = dt.datetime.combine(schedule_date_local, end_time).astimezone(tz.UTC).replace(tzinfo=timezone)
+                start_time = dt.datetime.combine(schedule_date_local, start_time).astimezone(tz.tzutc).replace(tzinfo=timezone)
+                end_time = dt.datetime.combine(schedule_date_local, end_time).astimezone(tz.tzutc).replace(tzinfo=timezone)
                 bell_schedule.add_period(row["name"], start_time, end_time)
 
         return bell_schedule
@@ -132,7 +132,7 @@ class BellSchedule:
         try:
             timezone = tz.gettz(sched_json["timezone"])
         except ValueError:
-            timezone = tz.UTC
+            timezone = tz.tzutc
         
         new_bs = BellSchedule(
             sched_json["name"],
