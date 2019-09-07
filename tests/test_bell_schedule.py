@@ -1,19 +1,21 @@
 import sys
 sys.path.insert(0, './SharedCode')
-from bell_schedule.bell_schedule import Period, BellSchedule
+from bell_schedule import Period, BellSchedule
 import datetime as dt
+from dateutil import tz
 import pytest
 import os
 from freezegun import freeze_time
-from dateutil import tz
 
-timezone = tz.gettz("US/Eastern")
-test_date = dt.datetime(2019, 5, 15, 8, 25).replace(tzinfo=timezone)
+tzname = "US/Eastern"
+timezone = tz.gettz(tzname)
+
+test_date = dt.datetime(2019, 5, 15, 8, 25, tzinfo=timezone)
 
 @pytest.fixture(scope="module")
 def pc_bellschedule():
     return BellSchedule.from_csv(
-        "test/test_input.csv", schedule_date=test_date, timezone=timezone
+        "tests/test_input.csv", schedule_date=test_date, tzname=tzname
     )
 
 def test_create_schedule():
@@ -44,12 +46,12 @@ def test_add_period_by_namedtuple(pc_bellschedule):
 
 
 def test_schedule_to_csv(pc_bellschedule):
-    csv_file = "test/test_output.csv"
+    csv_file = "tests/test_output.csv"
     pc_bellschedule.to_csv(csv_file)
 
 def test_schedule_to_json(pc_bellschedule):
     output_json = pc_bellschedule.to_json()
-    json_file = "test/test_output.json"
+    json_file = "tests/test_output.json"
     with open(json_file, 'w') as outfile:
         outfile.write(output_json)
     assert '2019-05-15T08:21:00-04:00' in output_json
@@ -58,17 +60,16 @@ def test_schedule_to_json(pc_bellschedule):
 @freeze_time(test_date)
 def test_csv_to_schedule():
     # Setup
-    test_date = dt.datetime(2019, 7, 7, tzinfo=timezone)
-    csv_file = "test/test_input.csv"
+    csv_file = "tests/test_input.csv"
     pc_bellschedule = BellSchedule.from_csv(
-        csv_file, schedule_date=test_date, timezone=timezone
+        csv_file, schedule_date=test_date, tzname=tzname
     )
     assert isinstance(pc_bellschedule, BellSchedule)
     assert len(pc_bellschedule.periods) == 13
 
 @freeze_time(test_date)
 def test_json_to_schedule(pc_bellschedule):
-    json_file = "test/test_input.json"
+    json_file = "tests/test_input.json"
     pc_bellschedule = BellSchedule.read_json(json_file)
     assert isinstance(pc_bellschedule, BellSchedule)
     assert len(pc_bellschedule.periods) == 12

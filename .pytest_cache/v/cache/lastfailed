@@ -1,4 +1,0 @@
-{
-  "test_bell_schedule.py::test_current_period": true,
-  "test_bell_schedule.py::test_schedule_to_json": true
-}

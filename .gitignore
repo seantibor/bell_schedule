@@ -4,3 +4,6 @@ Pipfile.lock
 __pycache__/*
 .vscode/*
 client_secret.json
+bell_schedule.egg-info/
+src/bell_schedule/__pycache__
+tests/__pycache__

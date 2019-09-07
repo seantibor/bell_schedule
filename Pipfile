@@ -9,7 +9,6 @@ black = "*"
 
 [packages]
 pytest = "*"
-arrow = "*"
 freezegun = "*"
 pydrive = "*"
 pytest-cov = "*"
