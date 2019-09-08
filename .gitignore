@@ -7,3 +7,4 @@ client_secret.json
 bell_schedule.egg-info/
 src/bell_schedule/__pycache__
 tests/__pycache__
+.pytest_cache/
