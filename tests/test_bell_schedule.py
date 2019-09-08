@@ -44,6 +44,21 @@ def test_add_period_by_namedtuple(pc_bellschedule):
     assert len(pc_bellschedule.periods) == start_count + 1
     assert pc_bellschedule.get_period('Y') == test_period
 
+def test_timezone_consistency(pc_bellschedule):
+    # Setup
+    desired_tzname = tzname
+    desired_timezone = timezone
+
+    # Exercise
+
+    # Verify
+    for period in pc_bellschedule.periods.values():
+        assert period.start_time.tzinfo == desired_timezone
+        assert period.end_time.tzinfo == desired_timezone
+    assert pc_bellschedule.schedule_date.tzinfo == desired_timezone
+    assert pc_bellschedule.tzname == desired_tzname
+
+    # Cleanup
 
 def test_schedule_to_csv(pc_bellschedule):
     csv_file = "tests/test_output.csv"
