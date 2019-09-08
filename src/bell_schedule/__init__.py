@@ -81,8 +81,8 @@ class BellSchedule:
             return [
                 {
                     "name": period.name,
-                    "start_time": period.start_time.isoformat(),
-                    "end_time": period.end_time.isoformat(),
+                    "start_time": period.start_time.astimezone(self.tz).isoformat(),
+                    "end_time": period.end_time.astimezone(self.tz).isoformat(),
                     "duration_min": period.duration_min,
                 }
                 for period in self.periods.values()
