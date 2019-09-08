@@ -7,7 +7,7 @@ import pytest
 import os
 from freezegun import freeze_time
 
-tzname = "US/Eastern"
+tzname = "America/New_York"
 timezone = tz.gettz(tzname)
 
 test_date = dt.datetime(2019, 5, 15, 8, 25, tzinfo=timezone)
@@ -93,7 +93,7 @@ def test_remove_period_by_name(pc_bellschedule):
 def test_remove_period_by_namedtuple(pc_bellschedule):
     start_count = len(pc_bellschedule.periods)
     pc_bellschedule.remove_period(
-        period_tup=Period("Y", dt.datetime.now(), dt.datetime.now(), 0)
+        period=Period("Y", dt.datetime.now(), dt.datetime.now(), 0)
     )
     assert len(pc_bellschedule.periods) == start_count - 1
 

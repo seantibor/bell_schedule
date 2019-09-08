@@ -1,7 +1,14 @@
+"""
+This library is used to represent the daily bell schedule for schools. 
+For example, a school may have a default daily schedule for each class 
+period, plus a number of special schedules for things like assemblies and events.
+
+The class BellSchedule holds an ordered collection of Periods. A Period has a name, start, and end time.
+All schedules are stored with timezone-aware datetime objects and can be serialized to and from JSON and CSV.
+"""
 from collections import namedtuple, OrderedDict
 import datetime as dt
 import csv
-import os
 import json
 from dateutil import parser, tz
 import pathlib
@@ -10,6 +17,8 @@ from typing import Union
 Period = namedtuple("Period", ["name", "start_time", "end_time", "duration_min"])
 time_format = "%H:%M"
 datetime_format = "%Y-%m-%dT%H:%M:%S%z"
+date_format = "%Y-%m-%d"
+UTC_IANA_NAME = "Etc/UTC"
 
 
 class BellSchedule:
@@ -18,23 +27,27 @@ class BellSchedule:
 
     Parameters:
     name: schedule name for human display
-    tzname: a string that will be used to localize the dates and times 
-        in the schedule. By default, all datetime objects are represented in UTC.
+    tzname: an IANA-standard string that will be used to localize the dates and times 
+        in the schedule. If a tzname is not provided, the schedule will be stored in UTC.
     schedule_date: the date of the schedule. defaults to today.
     """
 
     def __init__(
         self,
         name: str,
-        tzname: str = "UTC",
+        tzname: str = "Etc/UTC",
         schedule_date: dt.datetime = dt.datetime.now(tz=tz.UTC),
     ):
+        # Datetime objects must be timezone-aware
+        if schedule_date.tzinfo is None:
+            raise ValueError("schedule_date must be timezone-aware")
+
         self.tz = tz.gettz(tzname)
         self.periods = OrderedDict()
         self.schedule_date = schedule_date
         self.tzname = tzname
         self.name = name
-        self.ts = dt.datetime.utcnow().timestamp()
+        self.ts = dt.datetime.utcnow().timestamp() #used for caching
 
     def add_period(
         self,
@@ -46,18 +59,18 @@ class BellSchedule:
         if period is None:
             period = Period(
                 period_name,
-                start_time.astimezone(tz.UTC),
-                end_time.astimezone(tz.UTC),
+                start_time.astimezone(tz=self.tz),
+                end_time.astimezone(tz=self.tz),
                 (end_time - start_time).seconds / 60,
             )
 
         self.periods[period.name] = period
 
-    def remove_period(self, period_name: str = None, period_tup: Period = None) -> None:
-        if period_tup:
-            self.periods.pop(period_tup.name, None)
+    def remove_period(self, period: Union[Period, str]) -> None:
+        if isinstance(period, Period):
+            self.periods.pop(period.name, None)
         else:
-            self.periods.pop(period_name, None)
+            self.periods.pop(period, None)
 
     def get_period(self, period_name: str) -> Period:
         return self.periods[period_name]
@@ -67,8 +80,8 @@ class BellSchedule:
             return [
                 {
                     "name": period.name,
-                    "start_time": period.start_time.astimezone(self.tz).isoformat(),
-                    "end_time": period.end_time.astimezone(self.tz).isoformat(),
+                    "start_time": period.start_time.isoformat(),
+                    "end_time": period.end_time.isoformat(),
                     "duration_min": period.duration_min,
                 }
                 for period in self.periods.values()
@@ -81,13 +94,14 @@ class BellSchedule:
         cls,
         filename: Union[str, pathlib.Path],
         schedule_date: dt.datetime,
-        tzname: str = "UTC",
+        tzname: str = "Etc/UTC",
     ):
         timezone = tz.gettz(tzname)
         if isinstance(filename, str):
             filename = pathlib.Path(filename)
         name = filename.stem
-        schedule_date = schedule_date.astimezone(tz.UTC)
+        if schedule_date.tzinfo is None:
+            raise ValueError("schedule_date missing timezone info")
         bell_schedule = BellSchedule(
             name=name, schedule_date=schedule_date, tzname=tzname
         )
@@ -100,7 +114,7 @@ class BellSchedule:
                 end_time = dt.datetime.strptime(
                     f"{row['end_time']}", time_format
                 ).time()
-                schedule_date_local = schedule_date.astimezone(timezone).date()
+                schedule_date_local = schedule_date.date()
                 start_time = dt.datetime.combine(
                     schedule_date_local, start_time, tzinfo=timezone
                 )
@@ -128,8 +142,8 @@ class BellSchedule:
     def as_dict(self):
         schedule_dict = {
             "name": self.name,
-            "schedule_date": self.schedule_date.astimezone(self.tz).isoformat(),
-            "ts": self.ts or dt.datetime.now().timestamp(),
+            "schedule_date": self.schedule_date.strftime(date_format),
+            "ts": self.ts,
             "tzname": self.tzname,
             "periods": self.periods_as_list(serializable=True),
         }
@@ -140,11 +154,12 @@ class BellSchedule:
 
     @classmethod
     def from_json(cls, sched_json: json):
+        timezone = tz.gettz(sched_json['tzname'])
 
         new_bs = BellSchedule(
             sched_json["name"],
-            tzname=sched_json['tzname'],
-            schedule_date=parser.parse(sched_json["schedule_date"]),
+            tzname=sched_json["tzname"],
+            schedule_date=parser.parse(sched_json["schedule_date"]).replace(tzinfo=timezone),
         )
         new_bs.ts = sched_json.get("ts", dt.datetime.utcnow().timestamp())
         for period in sched_json["periods"]:
@@ -158,8 +173,6 @@ class BellSchedule:
                     (end_time - start_time).seconds / 60,
                 )
             )
-        with open("last_schedule.json", "w") as outfile:
-            outfile.write(new_bs.schedule_date.isoformat())
 
         return new_bs
 
@@ -170,8 +183,8 @@ class BellSchedule:
         return BellSchedule.from_json(sched_json=sched_json)
 
     @classmethod
-    def empty_schedule(cls, schedule_date=dt.datetime.utcnow()):
+    def empty_schedule(cls, schedule_date=dt.datetime.now(tz=tz.UTC)):
         return BellSchedule(
-            "No Classes", tzname="US/Eastern", schedule_date=schedule_date
+            "No Classes", tzname=UTC_IANA_NAME, schedule_date=schedule_date
         )
 
