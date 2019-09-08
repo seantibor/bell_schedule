@@ -20,4 +20,8 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
+    install_requires=[
+        'python-dateutil>=2.8.0',
+        'iso8601>=0.1.12'
+    ]
 )
