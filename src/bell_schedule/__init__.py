@@ -60,8 +60,8 @@ class BellSchedule:
         if period is None:
             period = Period(
                 period_name,
-                start_time.astimezone(tz=self.tz),
-                end_time.astimezone(tz=self.tz),
+                start_time,
+                end_time,
                 (end_time - start_time).seconds / 60,
             )
 
