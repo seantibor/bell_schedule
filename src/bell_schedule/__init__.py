@@ -110,7 +110,7 @@ class BellSchedule:
         if schedule_date.tzinfo is None:
             raise ValueError("schedule_date missing timezone info")
         bell_schedule = BellSchedule(
-            name=name, schedule_date=schedule_date, tzname=tzname
+            name=name, schedule_date=schedule_date, tzname=tzname, campus=campus, division=division
         )
         with filename.open() as infile:
             bellreader = csv.DictReader(infile)
