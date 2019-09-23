@@ -1,0 +1,23 @@
+<html>
+    <head>
+        <title>{{ schedule.schedule_date }} {{ division }} Bell Schedule</title>
+    </head>
+    <body>
+        <div id="title">
+            <h1 id="schedule_title">{{ schedule.schedule_date }} {{ division }} Bell Schedule</h1>
+            <h2 id="schedule_name">{{ schedule.name }}</h2>
+        </div>
+        <div id="details">
+            <p><span class="label">Schedule Date: </span><span class="value">{{ schedule.schedule_date }}</span></p>
+            <p><span class="label">Timezone: </span><span class="value">{{ timezone }}</span></p>
+        </div>
+        <div id="periods">
+            <table>
+                <tr>
+                {% for header in periods[0].keys() %}
+                <th>{{ header }}</th>
+                {% endfor %}
+                </tr>
+        </div>
+    </body>
+</html>

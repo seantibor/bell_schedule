@@ -38,6 +38,8 @@ class BellSchedule:
         name: str,
         tzname: str = "Etc/UTC",
         schedule_date: dt.datetime = dt.datetime.now(tz=tz.UTC),
+        campus: str = None,
+        division: str = None,
     ):
         # Datetime objects must be timezone-aware
         if schedule_date.tzinfo is None:
@@ -48,6 +50,8 @@ class BellSchedule:
         self.schedule_date = schedule_date
         self.tzname = tzname
         self.name = name
+        self.campus = campus
+        self.division = division
         self.ts = dt.datetime.utcnow().timestamp() #used for caching
 
     def add_period(
@@ -95,6 +99,8 @@ class BellSchedule:
         cls,
         filename: Union[str, pathlib.Path],
         schedule_date: dt.datetime,
+        campus: str = None,
+        division: str = None,
         tzname: str = "Etc/UTC",
     ):
         timezone = tz.gettz(tzname)
@@ -144,6 +150,8 @@ class BellSchedule:
         schedule_dict = {
             "name": self.name,
             "schedule_date": self.schedule_date.strftime(date_format),
+            "campus": self.campus,
+            "division": self.division,
             "ts": self.ts,
             "tzname": self.tzname,
             "periods": self.periods_as_list(serializable=True),
@@ -164,6 +172,7 @@ class BellSchedule:
             tzname=sched_json["tzname"],
             schedule_date=schedule_date,
         )
+        new_bs.campus, new_bs.division = sched_json.get('campus'), sched_json.get('division')
         new_bs.ts = sched_json.get("ts", dt.datetime.utcnow().timestamp())
         for period in sched_json["periods"]:
             start_time = iso8601.parse_date(period.get("start_time"))
