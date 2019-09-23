@@ -2,8 +2,9 @@
     "name": "50-30-10",
     "schedule_date": "2019-07-08",
     "tzname": "America/New_York",
-    "periods": [
-        {
+    "campus": "ftl",
+    "division": "middleschool",
+    "periods": [{
             "name": "Warning",
             "start_time": "2019-07-08T08:05:00-04:00",
             "end_time": "2019-07-08T08:10:00-04:00"
