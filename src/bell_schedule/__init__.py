@@ -115,19 +115,23 @@ class BellSchedule:
         with filename.open() as infile:
             bellreader = csv.DictReader(infile)
             for row in bellreader:
-                start_time = dt.datetime.strptime(
-                    f"{row['start_time']}", time_format
-                ).time()
-                end_time = dt.datetime.strptime(
-                    f"{row['end_time']}", time_format
-                ).time()
-                schedule_date_local = schedule_date.date()
-                start_time = dt.datetime.combine(
-                    schedule_date_local, start_time, tzinfo=timezone
-                )
-                end_time = dt.datetime.combine(
-                    schedule_date_local, end_time, tzinfo=timezone
-                )
+                try:
+                    start_time = iso8601.parse_date(row['start_time'])
+                    end_time = iso8601.parse_date(row['end_time'])
+                except iso8601.ParseError:
+                    start_time = dt.datetime.strptime(
+                        f"{row['start_time']}", time_format
+                    ).time()
+                    end_time = dt.datetime.strptime(
+                        f"{row['end_time']}", time_format
+                    ).time()
+                    schedule_date_local = schedule_date.date()
+                    start_time = dt.datetime.combine(
+                        schedule_date_local, start_time, tzinfo=timezone
+                    )
+                    end_time = dt.datetime.combine(
+                        schedule_date_local, end_time, tzinfo=timezone
+                    )
                 bell_schedule.add_period(row["name"], start_time, end_time)
 
         return bell_schedule
